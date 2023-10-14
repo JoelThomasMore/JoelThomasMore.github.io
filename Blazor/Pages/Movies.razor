@@ -1,0 +1,135 @@
+﻿@page "/movies"
+@inject HttpClient Http
+@using System.Net.Http.Json
+
+<PageTitle>Movies</PageTitle>
+
+<h1>Movies</h1>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-12">
+            <h1>Films zoeken (OMDB API)</h1>
+                <div class="form-group m-2">
+                    <label for="zoekterm">Zoekterm</label>
+                    <input type="text"
+                           class="form-control mx-2"
+                           @bind="@zoekterm" />
+                </div>
+            <button class="btn btn-primary btn-lg  mb-2" id="back" type="button" @onclick="GetMovies">Zoeken</button>
+
+        </div>
+    </div>
+
+    <div class="row m-2">
+        <div class="col-md-12">
+            <div class="row p-2" id="divMsg">
+                @if (msg != null)
+                {
+                    @msg
+                }
+            </div>
+            <div class="row p-3" id="divResult">
+                @if (movies == null)
+                {
+                }
+                else
+                {
+                    
+                            @foreach (Movie movie in movies)
+                            {
+                        @movie.Card();
+                    }
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+@code {
+    private RenderFragment msg;
+    private List<Movie> movies;
+    private string zoekterm;
+
+
+    private async Task GetMovies(){
+        
+
+        if (!string.IsNullOrWhiteSpace(zoekterm))
+        {
+                string key = "9aa2196e";
+                string url = $"https://www.omdbapi.com/?s={zoekterm}&apikey={key}";
+                msg = @<p>Loading</p>;
+
+                var json = await Http.GetFromJsonAsync<response>(url);
+                msg = @<p>Loading</p>;
+
+                if (json.Search.Count() > 0)
+                {
+                    msg = @<p>@json.totalResults</p>;
+                    movies = json.Search.ToList();
+
+                }
+                else
+                {
+                    msg = @<p>search failed</p>;
+                    movies = null;
+                }
+
+        }
+    }
+    private class Movie
+    {
+    //Poster
+    //:
+    //"https://m.media-amazon.com/images/M/MV5BN2U1MWE1NTMtYjQ2ZC00MTFmLWFmYjItODMyNGYxOTAyZmEzXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg"
+    //Title
+    //:
+    //"Jaws 2"
+    //Type
+    //:
+    //"movie"
+    //Year
+    //:
+    //"1978"
+    //imdbID
+    //:
+    //"tt0077766"
+        
+        public string Poster { get; set; }
+        public string Title { get; set; }
+        public string Type { get; set; }
+        public string Year { get; set; }
+        public string imdbID { get; set; }
+
+        public RenderFragment Card(){
+            return @<div class="col-md-4 col-sm-6">
+                    <div class="card mb-3 shadow-sm">    
+                    <img src=@this.Poster class="img-responsive">
+                    <div class="card-body">
+                        <p class="card-text">@this.Title</p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <small class="text-muted">Type: @this.Type</small>
+                            <small class="text-muted">Year: @this.Year</small>
+                            <small class="text-muted">imdb: @this.Year</small>
+
+                        </div>
+                    </div>
+                    </div>
+        </div>
+    ;
+        }
+    }
+    private class response
+    {
+        public Movie[] Search { get; set; }
+        public string totalResults { get; set; }
+        public string Response { get; set; }
+    }
+    
+
+
+}

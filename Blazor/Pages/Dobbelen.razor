@@ -1,0 +1,142 @@
+﻿@page "/dobbelen"
+
+<PageTitle>Dobbelen</PageTitle>
+
+<h1>Dobbelen</h1>
+
+@if (loaded == false)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="container mt-4">
+        <div class="row">
+             @cards
+            <div class="row justify-content-center mt-3">
+                <div class="col-6 align-self-center text-center">
+                    <div class="alert alert-info" id="result" role="alert">@alert</div>
+                </div>
+            </div>
+
+            <div class="row justify-content-center mt-3">
+                                    <div class="col-auto mb-3">
+                        <label for="geboortedatum">Hoeveel rollen een 6?</label>
+                        <input type="int" @bind="@guess">
+                    </div>
+                <div class="col-3 text-center">
+                    <button id="play" type="Button" class="btn btn-primary"@onclick="Roll">PLAY</button>
+                </div>
+                <div class="col-3 text-center">
+                    <button id="reset" type="Button" class="btn btn-danger" @onclick="Reset">RESET</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+}
+
+@code {
+
+    private bool loaded = false;
+    private RenderFragment cards;
+    private RenderFragment alert =@<p>Hoeveel spelers denk je dat er een 6 gaan gooien? (1-12)</p>;
+    private int numberOfPlayers = 12;
+    private List<Speler> spelers = new List<Speler>();
+    private int guess = 0;
+
+    public class Speler
+    {
+        public int Id { get; set; }
+
+        public int Rol { get; set; }
+
+        public bool colorGreen { get; set; }
+
+        public Speler(int id)
+        {
+            Id = id;
+            Rol = 0;
+            colorGreen = false;
+        }
+
+            public void RolDobbelSteen() {
+                Random rand = new Random();
+                Rol = rand.Next(1, 7);
+                if (Rol == 6)
+                {
+                    colorGreen = true;
+                }
+                else
+                {
+                    colorGreen = false;
+                }
+            }
+            public RenderFragment ReturnCard() {
+                return 
+    @<div class="col-md-3 mb-3">
+        <div class="card @(this.colorGreen ? "bg-success" : "bg-secondary") text-white" id=@this.Id>
+                        <div class="card-body">
+                        <h5 class="card-title">speler @this.Id : score @this.Rol</h5>
+                        </div>
+                        </div>
+    </div>
+    ;
+        }
+    }
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        for (int i = 0; i < numberOfPlayers; i++)
+        {
+            Speler nieuweSpeler = new Speler(i + 1);
+            spelers.Add(nieuweSpeler);
+
+            // toevoegen card
+            if (i == 0)
+            {
+                cards = nieuweSpeler.ReturnCard();
+            }
+            else{
+                cards += nieuweSpeler.ReturnCard();
+            }
+        }
+
+        loaded = true;
+
+    }
+
+    private void Roll(){
+        int AantalZes = 0;
+        foreach (Speler item in spelers)
+        {
+            item.RolDobbelSteen();
+            if (item.Rol == 6)
+            {
+                AantalZes++;
+            }
+        }
+
+        if (guess == AantalZes)
+        {
+            alert =@<p>Gewonnen. Juist geraden!</p>;
+        }
+        else
+        {
+            alert = @<p> Oeps. @AantalZes speler gooiden een zes. Probeer nog eens...</p>;
+        }
+    }
+
+    private void Reset()
+    {
+        foreach (Speler item in spelers)
+        {
+            item.Rol = 0;
+            item.colorGreen = false;
+        }
+        alert =@<p>Hoeveel spelers denk je dat er een 6 gaan gooien? (1-12)</p>;
+        guess = 0;
+    }
+
+}
